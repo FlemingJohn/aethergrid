@@ -6,6 +6,7 @@ import { makeInitialDevices } from "../lib/makeInitialDevices";
 export function useSimulation() {
   const [devices, setDevices] = useState<Device[]>(makeInitialDevices);
   const [isStreaming, setIsStreaming] = useState<boolean>(true);
+  const [attackMessage, setAttackMessage] = useState<string>("");
   const [records, setRecords] = useState<VerificationRecord[]>([
     {
       id: "tx-init-1",
@@ -37,63 +38,117 @@ export function useSimulation() {
     if (!isStreaming) {
       return;
     }
-
     const intervalHandle = setInterval(() => {
-      setDevices((previousDevices) => {
-        const targetIndex = Math.floor(Math.random() * previousDevices.length);
-        const targetDevice = previousDevices[targetIndex];
-
-        const variation = 0.9 + Math.random() * 0.2;
-        const newKilowatts = Number((targetDevice.nominalKilowatts * variation).toFixed(2));
-        const deltaWattHours = Math.max(12, Math.floor((newKilowatts * 1000) / 120));
-        const newCumulative = targetDevice.cumulativeWattHours + deltaWattHours;
-        const newNonce = targetDevice.nonce + 1;
-        const mintedTokens = Number((deltaWattHours / 1000).toFixed(4));
-
-        const updatedDevice: Device = {
-          ...targetDevice,
-          currentKilowatts: newKilowatts,
-          cumulativeWattHours: newCumulative,
-          nonce: newNonce
-        };
-
-        const newRecord: VerificationRecord = {
-          id: `tx-${Date.now()}`,
-          deviceName: targetDevice.name,
-          deviceAddress: targetDevice.address,
-          nonce: newNonce,
-          deltaWattHours: deltaWattHours,
-          cumulativeWattHours: newCumulative,
-          mintedTokens: mintedTokens,
-          transactionHash: generateRandomHash(),
-          timestamp: Date.now(),
-          status: "verified"
-        };
-
-        setRecords((previousRecords) => [newRecord, ...previousRecords.slice(0, 7)]);
-
-        return previousDevices.map((device, index) =>
-          index === targetIndex ? updatedDevice : device
-        );
-      });
-    }, 3500);
-
+      advanceSimulation();
+    }, 3200);
     return () => clearInterval(intervalHandle);
   }, [isStreaming]);
+
+  function advanceSimulation() {
+    setDevices((previousDevices) => {
+      const targetIndex = Math.floor(Math.random() * previousDevices.length);
+      const targetDevice = previousDevices[targetIndex];
+
+      const variation = 0.9 + Math.random() * 0.2;
+      const newKilowatts = Number((targetDevice.nominalKilowatts * variation).toFixed(2));
+      const deltaWattHours = Math.max(15, Math.floor((newKilowatts * 1000) / 120));
+      const newCumulative = targetDevice.cumulativeWattHours + deltaWattHours;
+      const newNonce = targetDevice.nonce + 1;
+      const mintedTokens = Number((deltaWattHours / 1000).toFixed(4));
+
+      const updatedDevice: Device = {
+        ...targetDevice,
+        currentKilowatts: newKilowatts,
+        cumulativeWattHours: newCumulative,
+        nonce: newNonce
+      };
+
+      const newRecord: VerificationRecord = {
+        id: `tx-${Date.now()}`,
+        deviceName: targetDevice.name,
+        deviceAddress: targetDevice.address,
+        nonce: newNonce,
+        deltaWattHours: deltaWattHours,
+        cumulativeWattHours: newCumulative,
+        mintedTokens: mintedTokens,
+        transactionHash: makeRandomHash(),
+        timestamp: Date.now(),
+        status: "verified"
+      };
+
+      setRecords((previousRecords) => [newRecord, ...previousRecords.slice(0, 9)]);
+
+      return previousDevices.map((device, index) =>
+        index === targetIndex ? updatedDevice : device
+      );
+    });
+  }
 
   function toggleStreaming() {
     setIsStreaming((previous) => !previous);
   }
 
+  function stepOnce() {
+    advanceSimulation();
+  }
+
+  function injectReplayAttack() {
+    const targetDevice = devices[0];
+    const staleRecord: VerificationRecord = {
+      id: `tx-err-${Date.now()}`,
+      deviceName: targetDevice.name,
+      deviceAddress: targetDevice.address,
+      nonce: targetDevice.nonce,
+      deltaWattHours: 0,
+      cumulativeWattHours: targetDevice.cumulativeWattHours,
+      mintedTokens: 0,
+      transactionHash: makeRandomHash(),
+      timestamp: Date.now(),
+      status: "stale"
+    };
+    setRecords((previous) => [staleRecord, ...previous]);
+    setAttackMessage(`REVERT: Nonce #${targetDevice.nonce} is stale. Contract rejected double-spend!`);
+    setTimeout(() => setAttackMessage(""), 5000);
+  }
+
+  function injectForgedAttack() {
+    const targetDevice = devices[1];
+    const forgedRecord: VerificationRecord = {
+      id: `tx-forge-${Date.now()}`,
+      deviceName: targetDevice.name,
+      deviceAddress: targetDevice.address,
+      nonce: targetDevice.nonce + 1,
+      deltaWattHours: 0,
+      cumulativeWattHours: targetDevice.cumulativeWattHours,
+      mintedTokens: 0,
+      transactionHash: makeRandomHash(),
+      timestamp: Date.now(),
+      status: "rejected"
+    };
+    setRecords((previous) => [forgedRecord, ...previous]);
+    setAttackMessage("REVERT: ecrecover mismatch. Invalid ECDSA signature rejected!");
+    setTimeout(() => setAttackMessage(""), 5000);
+  }
+
+  const totalWattHours = devices.reduce((sum, d) => sum + d.cumulativeWattHours, 0);
+  const totalMintedTokens = Number((totalWattHours / 1000).toFixed(4));
+
   return {
     devices,
     records,
+    latestRecord: records[0],
     isStreaming,
-    toggleStreaming
+    attackMessage,
+    totalWattHours,
+    totalMintedTokens,
+    toggleStreaming,
+    stepOnce,
+    injectReplayAttack,
+    injectForgedAttack
   };
 }
 
-function generateRandomHash(): string {
+function makeRandomHash(): string {
   const characters = "0123456789abcdef";
   let result = "0x";
   for (let index = 0; index < 48; index += 1) {
@@ -101,4 +156,3 @@ function generateRandomHash(): string {
   }
   return result;
 }
-

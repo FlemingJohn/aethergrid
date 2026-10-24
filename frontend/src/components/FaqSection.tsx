@@ -59,3 +59,4 @@ export function FaqSection({ items }: FaqSectionProperties) {
     </section>
   );
 }
+

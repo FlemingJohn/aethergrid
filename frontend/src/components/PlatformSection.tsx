@@ -58,3 +58,4 @@ export function PlatformSection({ pillars }: PlatformSectionProperties) {
     </section>
   );
 }
+

@@ -9,6 +9,7 @@ import { FaqSection } from "./components/FaqSection";
 import { CallToActionSection } from "./components/CallToActionSection";
 import { Footer } from "./components/Footer";
 import { useSimulation } from "./hooks/useSimulation";
+import { usePortaldotWallet } from "./hooks/usePortaldotWallet";
 import { MetricItem } from "./types/MetricItem";
 import { StepItem } from "./types/StepItem";
 import { PlatformPillar } from "./types/PlatformPillar";
@@ -103,6 +104,7 @@ const faqItems: FaqItem[] = [
 
 export function App() {
   const { devices, records, isStreaming, toggleStreaming } = useSimulation();
+  const { accountAddress, isConnected, isConnecting, connectWallet } = usePortaldotWallet();
 
   function scrollToExplorer() {
     const targetElement = document.getElementById("telemetry");
@@ -113,7 +115,14 @@ export function App() {
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      <NavigationBar onStartBuilding={toggleStreaming} isStreaming={isStreaming} />
+      <NavigationBar
+        onStartBuilding={toggleStreaming}
+        isStreaming={isStreaming}
+        accountAddress={accountAddress}
+        isConnected={isConnected}
+        isConnecting={isConnecting}
+        onConnectWallet={connectWallet}
+      />
       <main style={{ flex: 1 }}>
         <HeroSection onStartBuilding={toggleStreaming} onSeePossibilities={scrollToExplorer} />
         <StatsRow metrics={metricItems} />

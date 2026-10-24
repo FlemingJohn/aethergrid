@@ -95,3 +95,4 @@ export function PacketInspector({ record }: PacketInspectorProperties) {
     </div>
   );
 }
+

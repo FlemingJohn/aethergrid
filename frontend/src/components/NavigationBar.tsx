@@ -1,8 +1,11 @@
 import { Zap, SunMedium } from "lucide-react";
 import { PrimaryButton } from "./PrimaryButton";
 import { WalletButton } from "./WalletButton";
+import { ViewSwitcher } from "./ViewSwitcher";
 
 interface NavigationBarProperties {
+  activeView: "landing" | "studio";
+  onChangeView: (view: "landing" | "studio") => void;
   onStartBuilding: () => void;
   isStreaming: boolean;
   accountAddress: string;
@@ -12,6 +15,8 @@ interface NavigationBarProperties {
 }
 
 export function NavigationBar({
+  activeView,
+  onChangeView,
   onStartBuilding,
   isStreaming,
   accountAddress,
@@ -34,24 +39,28 @@ export function NavigationBar({
         zIndex: 50
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: "var(--space-three)" }}>
-        <div
-          style={{
-            width: 34,
-            height: 34,
-            borderRadius: "var(--radius-small)",
-            backgroundColor: "var(--colour-accent)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "var(--colour-text-inverse)"
-          }}
-        >
-          <Zap size={20} strokeWidth={2.5} />
+      <div style={{ display: "flex", alignItems: "center", gap: "var(--space-four)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-three)" }}>
+          <div
+            style={{
+              width: 34,
+              height: 34,
+              borderRadius: "var(--radius-small)",
+              backgroundColor: "var(--colour-accent)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "var(--colour-text-inverse)"
+            }}
+          >
+            <Zap size={20} strokeWidth={2.5} />
+          </div>
+          <span style={{ fontSize: "1.125rem", fontWeight: 800, letterSpacing: "-0.02em" }}>
+            AetherGrid
+          </span>
         </div>
-        <span style={{ fontSize: "1.125rem", fontWeight: 800, letterSpacing: "-0.02em" }}>
-          AetherGrid
-        </span>
+
+        <ViewSwitcher activeView={activeView} onChangeView={onChangeView} />
       </div>
 
       <nav style={{ display: "flex", alignItems: "center", gap: "var(--space-six)" }}>
@@ -63,9 +72,6 @@ export function NavigationBar({
         </a>
         <a href="#docs" style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.08em", color: "var(--colour-text-secondary)" }}>
           DOCS
-        </a>
-        <a href="#blog" style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.08em", color: "var(--colour-text-secondary)" }}>
-          BLOG
         </a>
         <a href="#faq" style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.08em", color: "var(--colour-text-secondary)" }}>
           FAQ
@@ -91,7 +97,7 @@ export function NavigationBar({
           onConnect={onConnectWallet}
         />
         <PrimaryButton onClick={onStartBuilding}>
-          {isStreaming ? "START BUILDING" : "RESUME STREAM"}
+          {activeView === "studio" ? (isStreaming ? "PAUSE FLEET" : "RESUME FLEET") : "LAUNCH STUDIO"}
         </PrimaryButton>
       </div>
     </header>

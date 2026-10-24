@@ -132,7 +132,6 @@ contract EnergyRegistry {
         if (v < 27) {
             v += 27;
         }
-        return ecrecover(digest, v, s);
+        return ecrecover(digest, v, r, s);
     }
 }
-

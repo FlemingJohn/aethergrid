@@ -61,3 +61,4 @@ export function PlatformCard({ pillar }: PlatformCardProperties) {
     </div>
   );
 }
+

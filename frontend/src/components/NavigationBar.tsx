@@ -1,12 +1,24 @@
 import { Zap, SunMedium } from "lucide-react";
 import { PrimaryButton } from "./PrimaryButton";
+import { WalletButton } from "./WalletButton";
 
 interface NavigationBarProperties {
   onStartBuilding: () => void;
   isStreaming: boolean;
+  accountAddress: string;
+  isConnected: boolean;
+  isConnecting: boolean;
+  onConnectWallet: () => void;
 }
 
-export function NavigationBar({ onStartBuilding, isStreaming }: NavigationBarProperties) {
+export function NavigationBar({
+  onStartBuilding,
+  isStreaming,
+  accountAddress,
+  isConnected,
+  isConnecting,
+  onConnectWallet
+}: NavigationBarProperties) {
   return (
     <header
       style={{
@@ -60,7 +72,7 @@ export function NavigationBar({ onStartBuilding, isStreaming }: NavigationBarPro
         </a>
       </nav>
 
-      <div style={{ display: "flex", alignItems: "center", gap: "var(--space-four)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "var(--space-three)" }}>
         <button
           style={{
             background: "none",
@@ -72,6 +84,12 @@ export function NavigationBar({ onStartBuilding, isStreaming }: NavigationBarPro
         >
           <SunMedium size={18} />
         </button>
+        <WalletButton
+          accountAddress={accountAddress}
+          isConnected={isConnected}
+          isConnecting={isConnecting}
+          onConnect={onConnectWallet}
+        />
         <PrimaryButton onClick={onStartBuilding}>
           {isStreaming ? "START BUILDING" : "RESUME STREAM"}
         </PrimaryButton>

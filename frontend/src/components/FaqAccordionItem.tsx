@@ -48,3 +48,4 @@ export function FaqAccordionItem({ item }: FaqAccordionItemProperties) {
     </div>
   );
 }
+

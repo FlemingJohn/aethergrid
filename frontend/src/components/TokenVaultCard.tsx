@@ -82,3 +82,4 @@ export function TokenVaultCard({ totalMintedTokens, totalWattHours }: TokenVault
     </div>
   );
 }
+

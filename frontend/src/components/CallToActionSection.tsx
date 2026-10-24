@@ -63,3 +63,4 @@ export function CallToActionSection({ onStartBuilding }: CallToActionSectionProp
     </section>
   );
 }
+

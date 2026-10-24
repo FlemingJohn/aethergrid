@@ -1,12 +1,12 @@
+import { useState } from "react";
 import { NavigationBar } from "./components/NavigationBar";
 import { HeroSection } from "./components/HeroSection";
 import { StatsRow } from "./components/StatsRow";
 import { StepSection } from "./components/StepSection";
 import { PlatformSection } from "./components/PlatformSection";
-import { DeviceGrid } from "./components/DeviceGrid";
-import { TelemetryTable } from "./components/TelemetryTable";
 import { FaqSection } from "./components/FaqSection";
 import { CallToActionSection } from "./components/CallToActionSection";
+import { SimulatorStudio } from "./components/SimulatorStudio";
 import { Footer } from "./components/Footer";
 import { useSimulation } from "./hooks/useSimulation";
 import { usePortaldotWallet } from "./hooks/usePortaldotWallet";
@@ -103,36 +103,65 @@ const faqItems: FaqItem[] = [
 ];
 
 export function App() {
-  const { devices, records, isStreaming, toggleStreaming } = useSimulation();
-  const { accountAddress, isConnected, isConnecting, connectWallet } = usePortaldotWallet();
+  const [activeView, setActiveView] = useState<"landing" | "studio">("studio");
+  const simulation = useSimulation();
+  const wallet = usePortaldotWallet();
 
-  function scrollToExplorer() {
-    const targetElement = document.getElementById("telemetry");
-    if (targetElement) {
-      targetElement.scrollIntoView({ behavior: "smooth" });
+  function handleOpenStudio() {
+    setActiveView("studio");
+  }
+
+  function handlePrimaryNavClick() {
+    if (activeView === "landing") {
+      setActiveView("studio");
+    } else {
+      simulation.toggleStreaming();
     }
   }
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <NavigationBar
-        onStartBuilding={toggleStreaming}
-        isStreaming={isStreaming}
-        accountAddress={accountAddress}
-        isConnected={isConnected}
-        isConnecting={isConnecting}
-        onConnectWallet={connectWallet}
+        activeView={activeView}
+        onChangeView={setActiveView}
+        onStartBuilding={handlePrimaryNavClick}
+        isStreaming={simulation.isStreaming}
+        accountAddress={wallet.accountAddress}
+        isConnected={wallet.isConnected}
+        isConnecting={wallet.isConnecting}
+        onConnectWallet={wallet.connectWallet}
       />
+
       <main style={{ flex: 1 }}>
-        <HeroSection onStartBuilding={toggleStreaming} onSeePossibilities={scrollToExplorer} />
-        <StatsRow metrics={metricItems} />
-        <StepSection steps={stepItems} />
-        <PlatformSection pillars={platformPillars} />
-        <DeviceGrid devices={devices} />
-        <TelemetryTable records={records} />
-        <FaqSection items={faqItems} />
-        <CallToActionSection onStartBuilding={toggleStreaming} />
+        {activeView === "studio" ? (
+          <SimulatorStudio
+            devices={simulation.devices}
+            records={simulation.records}
+            latestRecord={simulation.latestRecord}
+            isStreaming={simulation.isStreaming}
+            attackMessage={simulation.attackMessage}
+            totalWattHours={simulation.totalWattHours}
+            totalMintedTokens={simulation.totalMintedTokens}
+            onToggleStreaming={simulation.toggleStreaming}
+            onStepOnce={simulation.stepOnce}
+            onInjectReplay={simulation.injectReplayAttack}
+            onInjectForged={simulation.injectForgedAttack}
+          />
+        ) : (
+          <>
+            <HeroSection
+              onStartBuilding={handleOpenStudio}
+              onSeePossibilities={handleOpenStudio}
+            />
+            <StatsRow metrics={metricItems} />
+            <StepSection steps={stepItems} />
+            <PlatformSection pillars={platformPillars} />
+            <FaqSection items={faqItems} />
+            <CallToActionSection onStartBuilding={handleOpenStudio} />
+          </>
+        )}
       </main>
+
       <Footer />
     </div>
   );

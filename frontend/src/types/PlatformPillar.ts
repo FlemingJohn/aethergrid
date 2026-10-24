@@ -5,3 +5,4 @@ export interface PlatformPillar {
   description: string;
   highlightText: string;
 }
+
